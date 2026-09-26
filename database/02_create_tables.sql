@@ -39,3 +39,6 @@ CREATE TABLE player_buildings (
         REFERENCES buildings(id)
         ON DELETE CASCADE
 );
+
+ALTER TABLE player_resources
+MODIFY minerals DECIMAL(20,4) NOT NULL DEFAULT 0;
