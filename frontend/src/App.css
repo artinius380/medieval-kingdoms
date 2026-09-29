@@ -1,0 +1,28 @@
+/* ========================================
+   ESTADOS DE LA APLICACIÓN
+======================================== */
+
+.game-loading,
+.game-error {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+}
+
+.error-message {
+  margin: 10px auto;
+  padding: 10px 16px;
+
+  max-width: 600px;
+
+  border-radius: 6px;
+
+  background: rgba(120, 20, 20, 0.75);
+  color: #f0e6d2;
+
+  font-size: 14px;
+}
