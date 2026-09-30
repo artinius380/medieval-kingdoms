@@ -2,10 +2,14 @@ import { useState } from 'react';
 
 import Header from '../components/Header';
 import BuildingCard from '../components/BuildingCard';
+import BuildingDetail from '../components/BuildingDetail';
+
+import type { Building } from '../types/game';
 
 import { usePlayer } from '../hooks/usePlayer';
 import { useResources } from '../hooks/useResources';
 import { useBuildings } from '../hooks/useBuildings';
+
 
 
 function GamePage() {
@@ -23,6 +27,8 @@ function GamePage() {
     const [activeMenu, setActiveMenu] =
         useState('recursos');
 
+    const [selectedBuilding, setSelectedBuilding] =
+        useState<Building | null>(null);
     // ----------------------------------------
     // Categorías de edificios
     // ----------------------------------------
@@ -256,9 +262,10 @@ function GamePage() {
                                 ? 'menu-item-active'
                                 : ''
                                 }`}
-                            onClick={() =>
-                                setActiveMenu('recursos')
-                            }
+                            onClick={() => {
+                                setActiveMenu('recursos');
+                                setSelectedBuilding(null);
+                            }}
                         >
                             Recursos Básicos
                         </button>
@@ -271,9 +278,10 @@ function GamePage() {
                                 ? 'menu-item-active'
                                 : ''
                                 }`}
-                            onClick={() =>
-                                setActiveMenu('ejercito')
-                            }
+                            onClick={() => {
+                                setActiveMenu('ejercito');
+                                setSelectedBuilding(null);
+                            }}
                         >
                             Ejército
                         </button>
@@ -286,9 +294,10 @@ function GamePage() {
                                 ? 'menu-item-active'
                                 : ''
                                 }`}
-                            onClick={() =>
-                                setActiveMenu('tecnologias')
-                            }
+                            onClick={() => {
+                                setActiveMenu('tecnologias');
+                                setSelectedBuilding(null);
+                            }}
                         >
                             Tecnologías
                         </button>
@@ -301,9 +310,10 @@ function GamePage() {
                                 ? 'menu-item-active'
                                 : ''
                                 }`}
-                            onClick={() =>
-                                setActiveMenu('exploracion')
-                            }
+                            onClick={() => {
+                                setActiveMenu('exploracion');
+                                setSelectedBuilding(null);
+                            }}
                         >
                             Exploración
                         </button>
@@ -316,9 +326,10 @@ function GamePage() {
                                 ? 'menu-item-active'
                                 : ''
                                 }`}
-                            onClick={() =>
-                                setActiveMenu('mapa')
-                            }
+                            onClick={() => {
+                                setActiveMenu('mapa');
+                                setSelectedBuilding(null);
+                            }}
                         >
                             Mapa
                         </button>
@@ -358,23 +369,39 @@ function GamePage() {
 
                             <div className="buildings-grid">
 
-                                {getBuildingsForMenu().map(
-                                    (building) => {
+                                {selectedBuilding ? (
 
-                                        return (
-                                            <BuildingCard
-                                                key={building.building_id}
-                                                building={building}
-                                                resources={resources.resources}
-                                                onUpgrade={handleUpgrade}
-                                                upgrading={
-                                                    upgradingBuildingId ===
-                                                    building.building_id
-                                                }
-                                            />
-                                        );
+                                    <BuildingDetail
+                                        building={selectedBuilding}
+                                        onBack={() =>
+                                            setSelectedBuilding(null)
+                                        }
+                                    />
 
-                                    }
+                                ) : (
+
+                                    getBuildingsForMenu().map(
+                                        (building) => {
+
+                                            return (
+                                                <BuildingCard
+                                                    key={building.building_id}
+                                                    building={building}
+                                                    resources={resources.resources}
+                                                    onUpgrade={handleUpgrade}
+                                                    upgrading={
+                                                        upgradingBuildingId ===
+                                                        building.building_id
+                                                    }
+                                                    onSelect={
+                                                        setSelectedBuilding
+                                                    }
+                                                />
+                                            );
+
+                                        }
+                                    )
+
                                 )}
 
                             </div>

@@ -258,10 +258,8 @@ p {
   gap: 30px;
 
   background:
-      linear-gradient(
-          rgba(15, 12, 8, 0.85),
-          rgba(5, 5, 5, 0.85)
-      );
+    linear-gradient(rgba(15, 12, 8, 0.85),
+      rgba(5, 5, 5, 0.85));
 
   border: 1px solid #8f6b20;
   border-radius: 8px;
@@ -269,8 +267,8 @@ p {
   padding: 8px 20px;
 
   box-shadow:
-      inset 0 0 8px rgba(0, 0, 0, 0.8),
-      0 3px 8px rgba(0, 0, 0, 0.7);
+    inset 0 0 8px rgba(0, 0, 0, 0.8),
+    0 3px 8px rgba(0, 0, 0, 0.7);
 
   width: fit-content;
   margin: 0 auto;
@@ -559,12 +557,10 @@ p {
 ======================================== */
 
 .upgrade-tooltip {
+
   position: absolute;
 
-  top: calc(100% + 25px);
   left: 50%;
-
-  transform: translateX(-50%);
 
   width: 280px;
   max-width: 280px;
@@ -574,6 +570,7 @@ p {
   background: rgba(20, 15, 10, 0.97);
 
   border: 1px solid rgba(170, 120, 40, 0.8);
+
   border-radius: 8px;
 
   color: var(--medieval-cream);
@@ -598,6 +595,30 @@ p {
   transition:
     opacity 0.15s ease,
     transform 0.15s ease;
+}
+
+
+/* ========================================
+   TOOLTIP ABAJO
+   ======================================== */
+
+.upgrade-tooltip-bottom {
+
+  top: calc(100% + 25px);
+
+  transform: translateX(-50%);
+}
+
+
+/* ========================================
+   TOOLTIP ARRIBA
+   ======================================== */
+
+.upgrade-tooltip-top {
+
+  bottom: calc(100% + 25px);
+
+  transform: translateX(-50%);
 }
 
 /* ========================================
@@ -1126,7 +1147,7 @@ p {
 }
 
 
-.tooltip-requirements > strong {
+.tooltip-requirements>strong {
 
   display: block;
 
@@ -1188,6 +1209,95 @@ p {
 
   color: #d9d9d9;
 
+}
+
+.building-detail {
+  position: relative;
+
+  grid-column: 1 / -1;
+
+  width: 100%;
+  height: 100%;
+
+  min-height: 500px;
+
+  box-sizing: border-box;
+
+  padding: 30px;
+
+  background: rgba(20, 15, 10, 0.88);
+
+  border: 1px solid rgba(170, 120, 40, 0.8);
+  border-radius: 12px;
+
+  color: var(--medieval-cream);
+
+  overflow: hidden;
+}
+
+.building-detail-back {
+  position: absolute;
+  right: 0;
+
+  padding: 8px 14px;
+
+  background: rgba(20, 15, 10, 0.9);
+  border: 1px solid rgba(170, 120, 40, 0.8);
+  border-radius: 7px;
+
+  color: var(--medieval-cream);
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+      background 0.15s ease,
+      transform 0.15s ease;
+}
+
+.building-detail-back:hover {
+  background: rgba(70, 50, 20, 0.95);
+  transform: translateY(-1px);
+}
+
+.building-detail-back:hover {
+  background: rgba(170, 120, 40, 0.5);
+}
+
+.building-detail-content {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 15px;
+}
+
+.building-detail-video {
+  width: min(70%, 600px);
+
+  max-height: 45%;
+
+  object-fit: cover;
+
+  border: 1px solid rgba(170, 120, 40, 0.8);
+  border-radius: 8px;
+}
+
+.building-detail-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 
 /* ========================================
@@ -1326,10 +1436,11 @@ p {
   }
 
   .buildings-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
   }
-  
+
 }
 
 

@@ -6,6 +6,8 @@ import type {
 
 import { resourceConfig } from '../config/resourceConfig';
 
+import { useState, useRef } from 'react';
+
 
 // ========================================
 // PROPS
@@ -16,6 +18,7 @@ interface BuildingCardProps {
     resources: CityResource[];
     onUpgrade: (buildingId: number) => void;
     upgrading: boolean;
+    onSelect: (building: Building) => void;
 }
 
 
@@ -27,9 +30,44 @@ function BuildingCard({
     building,
     resources,
     onUpgrade,
-    upgrading
+    upgrading,
+    onSelect
 }: BuildingCardProps) {
 
+    const [tooltipPosition, setTooltipPosition] =
+        useState<'bottom' | 'top'>('bottom');
+
+    const upgradeWrapperRef =
+        useRef<HTMLDivElement>(null);
+
+
+    const handleTooltipPosition = () => {
+
+        if (!upgradeWrapperRef.current) {
+            return;
+        }
+
+        const rect =
+            upgradeWrapperRef.current.getBoundingClientRect();
+
+        const tooltipHeight = 300;
+        const spacing = 10;
+
+        const spaceBelow =
+            window.innerHeight - rect.bottom;
+
+        const spaceAbove =
+            rect.top;
+
+        if (
+            spaceBelow < tooltipHeight + spacing &&
+            spaceAbove > spaceBelow
+        ) {
+            setTooltipPosition('top');
+        } else {
+            setTooltipPosition('bottom');
+        }
+    };
 
     // ========================================
     // FORMATO DE NÚMEROS
@@ -236,7 +274,10 @@ function BuildingCard({
 
         <div className="building-card-wrapper">
 
-            <div className="building-card">
+            <div
+                className="building-card"
+                onClick={() => onSelect(building)}
+            >
 
 
                 {/* ==================================
@@ -377,7 +418,11 @@ function BuildingCard({
                     BOTÓN DE MEJORA
                 ================================== */}
 
-                <div className="upgrade-button-wrapper">
+                <div
+                    ref={upgradeWrapperRef}
+                    className="upgrade-button-wrapper"
+                    onMouseEnter={handleTooltipPosition}
+                >
 
 
                     <button
@@ -385,13 +430,13 @@ function BuildingCard({
                             ? 'upgrade-button-ready'
                             : 'upgrade-button-disabled'
                             }`}
+                        onClick={(event) => {
+                            event.stopPropagation();
 
-                        onClick={() =>
                             onUpgrade(
                                 building.building_id
-                            )
-                        }
-
+                            );
+                        }}
                         disabled={!canUpgrade}
                     >
 
@@ -408,11 +453,13 @@ function BuildingCard({
 
                     {!upgrading && (
 
-                        <div className="upgrade-tooltip">
+                        <div
+                            className={`upgrade-tooltip upgrade-tooltip-${tooltipPosition}`}
+                        >
 
                             {/* ==================================
-    RECURSOS PARA MEJORAR
-================================== */}
+                            RECURSOS PARA MEJORAR
+                            ================================== */}
 
                             <strong>
                                 Recursos para mejorar
