@@ -4,6 +4,8 @@ USE medieval_kingdoms;
 -- ELIMINAR TABLAS EXISTENTES
 -- ============================================================
 
+DROP TABLE IF EXISTS building_requirements;
+DROP TABLE IF EXISTS building_production;
 DROP TABLE IF EXISTS city_buildings;
 DROP TABLE IF EXISTS building_costs;
 DROP TABLE IF EXISTS city_resources;
@@ -19,9 +21,7 @@ DROP TABLE IF EXISTS players;
 
 CREATE TABLE players (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
     username VARCHAR(50) NOT NULL UNIQUE,
-
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -32,14 +32,10 @@ CREATE TABLE players (
 
 CREATE TABLE cities (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
     player_id BIGINT UNSIGNED NOT NULL,
-
     name VARCHAR(100) NOT NULL,
-
     coordinate_x INT NOT NULL,
     coordinate_y INT NOT NULL,
-
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_cities_player
@@ -57,9 +53,7 @@ CREATE TABLE cities (
 
 CREATE TABLE resources (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
     name VARCHAR(50) NOT NULL UNIQUE,
-
     value DECIMAL(10,2) NOT NULL
 );
 
@@ -67,23 +61,11 @@ CREATE TABLE resources (
 -- ============================================================
 -- CITY RESOURCES
 -- ============================================================
--- Cantidad de cada recurso que posee una ciudad.
---
--- Una ciudad puede tener múltiples tipos de recursos.
---
--- Ejemplo:
--- Ciudad 1 -> Minerales
--- Ciudad 1 -> Madera
--- Ciudad 1 -> Comida
--- ============================================================
 
 CREATE TABLE city_resources (
     city_id BIGINT UNSIGNED NOT NULL,
-
     resource_id BIGINT UNSIGNED NOT NULL,
-
     amount DECIMAL(20,4) NOT NULL DEFAULT 0,
-
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (city_id, resource_id),
@@ -103,64 +85,69 @@ CREATE TABLE city_resources (
 -- ============================================================
 -- BUILDINGS
 -- ============================================================
--- Define los tipos de edificios disponibles.
+-- Tabla general para todas las edificaciones.
 --
--- resource_id:
--- Indica qué recurso produce el edificio.
+-- category identifica el menú al que pertenece:
+--   RECURSOS
+--   EJERCITO
+--   TECNOLOGIAS
 --
--- Ejemplo:
--- Mina       -> Minerales
--- Aserradero -> Madera
--- Granja     -> Comida
---
--- base_cost:
--- Valor total de construcción del edificio en puntos.
---
--- production_multiplier:
--- Multiplicador de producción por hora.
---
--- Mina       -> 0.50
--- Aserradero -> 1.00
--- Granja     -> 2.00
+-- La producción se define en building_production.
+-- Los costos se definen en building_costs.
+-- Los requisitos se definen en building_requirements.
 -- ============================================================
 
 CREATE TABLE buildings (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-
     name VARCHAR(50) NOT NULL UNIQUE,
-
-    resource_id BIGINT UNSIGNED NULL,
-
+    category VARCHAR(30) NOT NULL,
     base_cost DECIMAL(20,4) NOT NULL,
 
+    CONSTRAINT chk_buildings_category
+        CHECK (category IN ('RECURSOS', 'EJERCITO', 'TECNOLOGIAS'))
+);
+
+
+-- ============================================================
+-- BUILDING PRODUCTION
+-- ============================================================
+-- Solo las edificaciones productoras necesitan registros aquí.
+-- Ejemplo:
+--   Mina       -> Minerales -> 0.50
+--   Aserradero -> Madera    -> 1.00
+--   Granja     -> Comida    -> 2.00
+-- ============================================================
+
+CREATE TABLE building_production (
+    building_id BIGINT UNSIGNED NOT NULL,
+    resource_id BIGINT UNSIGNED NOT NULL,
     production_multiplier DECIMAL(10,4) NOT NULL,
 
-    CONSTRAINT fk_buildings_resource
+    PRIMARY KEY (building_id, resource_id),
+
+    CONSTRAINT fk_building_production_building
+        FOREIGN KEY (building_id)
+        REFERENCES buildings(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_building_production_resource
         FOREIGN KEY (resource_id)
         REFERENCES resources(id)
-        ON DELETE SET NULL
+        ON DELETE CASCADE
 );
 
 
 -- ============================================================
 -- BUILDING COSTS
 -- ============================================================
--- Define los recursos necesarios para construir/mejorar
--- cada tipo de edificio.
---
--- Ejemplo Mina nivel 1:
--- 100 Madera
--- 50 Minerales
---
--- Los costos posteriores se calcularán mediante la fórmula
--- de crecimiento que definiremos en el backend.
+-- amount representa el costo base del recurso para el nivel 1.
+-- El backend puede seguir aplicando el multiplicador de nivel
+-- que ya utiliza actualmente.
 -- ============================================================
 
 CREATE TABLE building_costs (
     building_id BIGINT UNSIGNED NOT NULL,
-
     resource_id BIGINT UNSIGNED NOT NULL,
-
     amount DECIMAL(20,4) NOT NULL,
 
     PRIMARY KEY (building_id, resource_id),
@@ -178,19 +165,46 @@ CREATE TABLE building_costs (
 
 
 -- ============================================================
--- CITY BUILDINGS
+-- BUILDING REQUIREMENTS
 -- ============================================================
--- Edificaciones pertenecientes a una ciudad.
---
--- Una ciudad puede tener una instancia de cada tipo
--- de edificio.
+-- Una edificación puede requerir varias edificaciones.
+-- Ejemplo:
+--   Caballeria -> Armeria nivel 5
+--   Caballeria -> Establo nivel 2
+-- ============================================================
+
+CREATE TABLE building_requirements (
+    building_id BIGINT UNSIGNED NOT NULL,
+    required_building_id BIGINT UNSIGNED NOT NULL,
+    required_level INT UNSIGNED NOT NULL,
+
+    PRIMARY KEY (building_id, required_building_id),
+
+    CONSTRAINT fk_building_requirements_building
+        FOREIGN KEY (building_id)
+        REFERENCES buildings(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_building_requirements_required_building
+        FOREIGN KEY (required_building_id)
+        REFERENCES buildings(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_building_requirements_level
+        CHECK (required_level >= 1),
+
+    CONSTRAINT chk_building_requirements_not_self
+        CHECK (building_id <> required_building_id)
+);
+
+
+-- ============================================================
+-- CITY BUILDINGS
 -- ============================================================
 
 CREATE TABLE city_buildings (
     city_id BIGINT UNSIGNED NOT NULL,
-
     building_id BIGINT UNSIGNED NOT NULL,
-
     level INT UNSIGNED NOT NULL DEFAULT 1,
 
     PRIMARY KEY (city_id, building_id),
@@ -203,5 +217,8 @@ CREATE TABLE city_buildings (
     CONSTRAINT fk_city_buildings_building
         FOREIGN KEY (building_id)
         REFERENCES buildings(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_city_buildings_level
+        CHECK (level >= 1)
 );

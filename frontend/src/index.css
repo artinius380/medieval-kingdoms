@@ -1114,6 +1114,83 @@ p {
 }
 
 /* ========================================
+   TOOLTIP - REQUISITOS
+======================================== */
+
+.tooltip-requirements {
+
+  margin-top: 12px;
+  padding-top: 10px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+
+.tooltip-requirements > strong {
+
+  display: block;
+
+  margin-bottom: 8px;
+
+}
+
+
+.tooltip-requirements-list {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+}
+
+
+.tooltip-requirement {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 8px;
+
+  font-size: 12px;
+
+}
+
+
+.tooltip-requirement-name {
+
+  font-weight: 600;
+
+}
+
+
+.tooltip-requirement-level {
+
+  white-space: nowrap;
+
+  font-size: 11px;
+
+}
+
+
+.tooltip-requirement-met {
+
+  color: #7fdc7f;
+
+}
+
+
+.tooltip-requirement-missing {
+
+  color: #d9d9d9;
+
+}
+
+/* ========================================
    RESPONSIVE - GAME CONTENT
 ======================================== */
 

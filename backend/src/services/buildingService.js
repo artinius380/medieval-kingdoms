@@ -110,12 +110,23 @@ async function getBuildingCosts(buildingId, level) {
     );
 
 
-    // Para nivel 0, el costo de construcción
-    // corresponde al costo base.
-    const costLevel =
-        Number(level) > 0
-            ? Number(level)
-            : 1;
+    // ========================================
+    // Calcular costo según nivel
+    // ========================================
+    //
+    // Nivel 0 -> 1 = costo base
+    // Nivel 1 -> 2 = costo base × 1.5
+    // Nivel 2 -> 3 = costo base × 1.5²
+    // Nivel 3 -> 4 = costo base × 1.5³
+    //
+    // COST_MULTIPLIER = 1.5
+    //
+
+    const currentLevel =
+        Math.max(
+            Number(level),
+            0
+        );
 
 
     return rows.map(cost => {
@@ -124,7 +135,7 @@ async function getBuildingCosts(buildingId, level) {
             Number(cost.base_amount) *
             Math.pow(
                 COST_MULTIPLIER,
-                costLevel - 1
+                currentLevel
             );
 
 
@@ -147,6 +158,76 @@ async function getBuildingCosts(buildingId, level) {
     });
 }
 
+// ========================================
+// Obtener requisitos de una edificación
+// ========================================
+
+async function getBuildingRequirements(cityId, buildingId) {
+
+    const [rows] = await pool.query(
+        `
+        SELECT
+            br.required_building_id AS building_id,
+            b.name AS building_name,
+            br.required_level,
+
+            COALESCE(cb.level, 0) AS current_level
+
+        FROM building_requirements br
+
+        JOIN buildings b
+            ON b.id = br.required_building_id
+
+        LEFT JOIN city_buildings cb
+            ON cb.building_id = br.required_building_id
+            AND cb.city_id = ?
+
+        WHERE br.building_id = ?
+
+        ORDER BY br.required_building_id
+        `,
+        [
+            cityId,
+            buildingId
+        ]
+    );
+
+
+    return rows.map(requirement => {
+
+        const requiredLevel =
+            Number(requirement.required_level);
+
+        const currentLevel =
+            Number(requirement.current_level);
+
+
+        return {
+
+            building_id:
+                Number(requirement.building_id),
+
+            building_name:
+                requirement.building_name,
+
+            required_level:
+                requiredLevel,
+
+            current_level:
+                currentLevel,
+
+            met:
+                currentLevel >= requiredLevel
+
+        };
+
+    });
+}
+
+// ========================================
+// Obtener todas las edificaciones
+// de una ciudad
+// ========================================
 
 // ========================================
 // Obtener todas las edificaciones
@@ -162,13 +243,16 @@ async function getCityBuildings(cityId) {
 
             b.name,
 
-            b.resource_id,
+            b.category,
+
+            bp.resource_id,
 
             r.name AS resource_name,
             r.value AS resource_value,
 
             b.base_cost,
-            b.production_multiplier,
+
+            bp.production_multiplier,
 
             COALESCE(cb.level, 0) AS level
 
@@ -178,8 +262,11 @@ async function getCityBuildings(cityId) {
             ON cb.building_id = b.id
             AND cb.city_id = ?
 
+        LEFT JOIN building_production bp
+            ON bp.building_id = b.id
+
         LEFT JOIN resources r
-            ON r.id = b.resource_id
+            ON r.id = bp.resource_id
 
         ORDER BY b.id
         `,
@@ -196,16 +283,23 @@ async function getCityBuildings(cityId) {
             Number(building.level);
 
 
-        // Calcular usando el nivel REAL.
-        // Si es nivel 0, calculateBuildingInfo()
-        // devolverá producción 0.
+        // Calcular información del edificio.
+        //
+        // Los edificios que no producen recursos
+        // tendrán production_multiplier = 0.
 
         const buildingInfo =
-            calculateBuildingInfo(building);
+            calculateBuildingInfo({
+                ...building,
+
+                production_multiplier:
+                    Number(
+                        building.production_multiplier ?? 0
+                    )
+            });
 
 
-        // Para nivel 0, getBuildingCosts()
-        // internamente utilizará el costo base.
+        // Obtener costos de construcción/mejora.
 
         const upgradeCosts =
             await getBuildingCosts(
@@ -213,6 +307,13 @@ async function getCityBuildings(cityId) {
                 level
             );
 
+        // Obtener requisitos de la edificación.
+
+        const requirements =
+            await getBuildingRequirements(
+                cityId,
+                building.building_id
+            );
 
         buildings.push({
 
@@ -225,11 +326,16 @@ async function getCityBuildings(cityId) {
             name:
                 building.name,
 
+            category:
+                building.category,
+
             resource_id:
-                Number(building.resource_id),
+                building.resource_id !== null
+                    ? Number(building.resource_id)
+                    : null,
 
             resource_name:
-                building.resource_name,
+                building.resource_name ?? null,
 
             resource_value:
                 Number(
@@ -243,13 +349,17 @@ async function getCityBuildings(cityId) {
 
             production_multiplier:
                 Number(
-                    building.production_multiplier
+                    building.production_multiplier ?? 0
                 ),
 
             ...buildingInfo,
 
+            ...buildingInfo,
+
             upgrade_costs:
-                upgradeCosts
+                upgradeCosts,
+
+            requirements
 
         });
 
@@ -259,6 +369,9 @@ async function getCityBuildings(cityId) {
     return buildings;
 }
 
+// ========================================
+// Obtener una edificación específica
+// ========================================
 
 // ========================================
 // Obtener una edificación específica
@@ -273,17 +386,21 @@ async function getCityBuilding(
         `
         SELECT
             cb.city_id,
+
             cb.building_id,
 
             b.name,
 
-            b.resource_id,
+            b.category,
+
+            bp.resource_id,
 
             r.name AS resource_name,
             r.value AS resource_value,
 
             b.base_cost,
-            b.production_multiplier,
+
+            bp.production_multiplier,
 
             cb.level
 
@@ -292,8 +409,11 @@ async function getCityBuilding(
         JOIN buildings b
             ON b.id = cb.building_id
 
+        LEFT JOIN building_production bp
+            ON bp.building_id = b.id
+
         LEFT JOIN resources r
-            ON r.id = b.resource_id
+            ON r.id = bp.resource_id
 
         WHERE cb.city_id = ?
           AND cb.building_id = ?
@@ -306,50 +426,88 @@ async function getCityBuilding(
 
 
     if (rows.length === 0) {
+
         return null;
+
     }
 
 
     const building = rows[0];
 
 
+    const level =
+        Number(building.level);
+
+
     const buildingInfo =
-        calculateBuildingInfo(building);
+        calculateBuildingInfo({
+
+            ...building,
+
+            production_multiplier:
+                Number(
+                    building.production_multiplier ?? 0
+                )
+
+        });
 
 
     const upgradeCosts =
         await getBuildingCosts(
             building.building_id,
-            building.level
+            level
+        );
+
+    const requirements =
+        await getBuildingRequirements(
+            cityId,
+            building.building_id
         );
 
 
     return {
 
-        city_id: building.city_id,
+        city_id:
+            Number(building.city_id),
 
-        building_id: building.building_id,
+        building_id:
+            Number(building.building_id),
 
-        name: building.name,
+        name:
+            building.name,
 
-        resource_id: building.resource_id,
+        category:
+            building.category,
 
-        resource_name: building.resource_name,
+        resource_id:
+            building.resource_id !== null
+                ? Number(building.resource_id)
+                : null,
+
+        resource_name:
+            building.resource_name ?? null,
 
         resource_value:
-            Number(building.resource_value ?? 0),
+            Number(
+                building.resource_value ?? 0
+            ),
 
-        level: building.level,
+        level,
 
         base_cost:
             Number(building.base_cost),
 
         production_multiplier:
-            Number(building.production_multiplier),
+            Number(
+                building.production_multiplier ?? 0
+            ),
 
         ...buildingInfo,
 
-        upgrade_costs: upgradeCosts
+        upgrade_costs:
+            upgradeCosts,
+
+        requirements
 
     };
 }
@@ -466,6 +624,76 @@ async function upgradeCityBuilding(
             buildingExists
                 ? Number(buildingRows[0].level)
                 : 0;
+
+
+        // ----------------------------------------
+        // Verificar requisitos de la edificación
+        // ----------------------------------------
+
+        const [requirementRows] =
+            await connection.query(
+                `
+                SELECT
+                    br.required_building_id,
+                    required_building.name AS required_building_name,
+                    br.required_level,
+
+                    COALESCE(
+                        city_required_building.level,
+                        0
+                    ) AS current_level
+
+                FROM building_requirements br
+
+                JOIN buildings required_building
+                    ON required_building.id =
+                       br.required_building_id
+
+                LEFT JOIN city_buildings city_required_building
+                    ON city_required_building.city_id = ?
+                   AND city_required_building.building_id =
+                       br.required_building_id
+
+                WHERE br.building_id = ?
+
+                FOR UPDATE
+                `,
+                [
+                    cityId,
+                    buildingId
+                ]
+            );
+
+
+        // ----------------------------------------
+        // Validar requisitos
+        // ----------------------------------------
+
+        for (const requirement of requirementRows) {
+
+            const requiredLevel =
+                Number(
+                    requirement.required_level
+                );
+
+            const currentRequiredLevel =
+                Number(
+                    requirement.current_level
+                );
+
+
+            if (
+                currentRequiredLevel <
+                requiredLevel
+            ) {
+
+                throw new Error(
+                    `Requiere ${requirement.required_building_name} nivel ${requiredLevel}`
+                );
+
+            }
+
+        }
 
 
         // ----------------------------------------
@@ -702,6 +930,8 @@ module.exports = {
 
     calculateBuildingInfo,
 
-    getBuildingCosts
+    getBuildingCosts,
+
+    getBuildingRequirements
 
 };

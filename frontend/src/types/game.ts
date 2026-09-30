@@ -80,12 +80,18 @@ export interface BuildingCost {
     amount: number;
 }
 
+export type BuildingCategory =
+    | 'RECURSOS'
+    | 'EJERCITO'
+    | 'TECNOLOGIAS';
 
 export interface Building {
 
     building_id: number;
 
     name: string;
+
+    category: BuildingCategory;
 
     resource_id: number;
 
@@ -108,6 +114,8 @@ export interface Building {
     upgrade_value: number;
 
     upgrade_costs: BuildingCost[];
+
+    requirements: BuildingRequirement[];
 }
 
 
@@ -142,4 +150,12 @@ export interface BuildingUpgradeResult {
 
     updated_at: string;
 
+}
+
+export interface BuildingRequirement {
+    building_id: number;
+    building_name: string;
+    required_level: number;
+    current_level: number;
+    met: boolean;
 }

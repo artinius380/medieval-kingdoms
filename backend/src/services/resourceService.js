@@ -72,13 +72,17 @@ async function updateCityResources(cityId) {
                     cb.level,
 
                     b.base_cost,
-                    b.production_multiplier,
-                    b.resource_id
+
+                    bp.resource_id,
+                    bp.production_multiplier
 
                 FROM city_buildings cb
 
                 JOIN buildings b
                     ON b.id = cb.building_id
+
+                LEFT JOIN building_production bp
+                    ON bp.building_id = b.id
 
                 WHERE cb.city_id = ?
                 `,
@@ -103,7 +107,7 @@ async function updateCityResources(cityId) {
 
             const productionMultiplier =
                 Number(
-                    building.production_multiplier
+                    building.production_multiplier || 0
                 );
 
 
@@ -128,6 +132,15 @@ async function updateCityResources(cityId) {
                 currentBuildingValue *
                 productionMultiplier;
 
+
+            // Los edificios que no producen recursos
+            // (por ejemplo, Cuartel, Armería, Establo, etc.)
+            // no tienen una fila en building_production.
+            // En ese caso simplemente no generan producción.
+
+            if (!building.resource_id) {
+                continue;
+            }
 
             const resourceId =
                 Number(building.resource_id);

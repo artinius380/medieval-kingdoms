@@ -23,6 +23,29 @@ function GamePage() {
     const [activeMenu, setActiveMenu] =
         useState('recursos');
 
+    // ----------------------------------------
+    // Categorías de edificios
+    // ----------------------------------------
+
+    const resourceBuildings = [
+        'Mina',
+        'Aserradero',
+        'Granja'
+    ];
+
+    const armyBuildings = [
+        'Transporte',
+        'Cuartel',
+        'Campo de Tiro',
+        'Caballería',
+        'Taller'
+    ];
+
+    const technologyBuildings = [
+        'Armería',
+        'Establo',
+        'Ingeniería'
+    ];
 
     // ----------------------------------------
     // Player
@@ -137,6 +160,12 @@ function GamePage() {
             case 'recursos':
                 return 'Recursos Básicos';
 
+            case 'ejercito':
+                return 'Ejército';
+
+            case 'tecnologias':
+                return 'Tecnologías';
+
             case 'exploracion':
                 return 'Exploración';
 
@@ -145,11 +174,37 @@ function GamePage() {
 
             default:
                 return 'Recursos Básicos';
-
         }
 
     };
 
+    const getBuildingsForMenu = () => {
+
+        switch (activeMenu) {
+
+            case 'recursos':
+                return buildings.buildings.filter(
+                    building =>
+                        building.category === 'RECURSOS'
+                );
+
+            case 'ejercito':
+                return buildings.buildings.filter(
+                    building =>
+                        building.category === 'EJERCITO'
+                );
+
+            case 'tecnologias':
+                return buildings.buildings.filter(
+                    building =>
+                        building.category === 'TECNOLOGIAS'
+                );
+
+            default:
+                return [];
+        }
+
+    };
 
     // ----------------------------------------
     // Interfaz
@@ -157,11 +212,11 @@ function GamePage() {
 
     return (
         <div className="game">
-    
+
             {/* ==================================
                 FONDO ANIMADO
             ================================== */}
-    
+
             <video
                 className="game-background-video"
                 autoPlay
@@ -174,26 +229,28 @@ function GamePage() {
                     type="video/mp4"
                 />
             </video>
-    
-    
+
+
             <Header
                 player={player}
                 resources={resources}
             />
-    
-    
+
+
             <main className="game-content">
-    
+
                 {/* ==================================
                     COLUMNA IZQUIERDA - MENÚ
                 ================================== */}
-    
+
                 <aside className="game-menu">
-    
+
                     <h3>Menú</h3>
-    
+
                     <nav>
-    
+
+                        {/* RECURSOS BÁSICOS */}
+
                         <button
                             className={`menu-item ${activeMenu === 'recursos'
                                 ? 'menu-item-active'
@@ -205,8 +262,40 @@ function GamePage() {
                         >
                             Recursos Básicos
                         </button>
-    
-    
+
+
+                        {/* EJÉRCITO */}
+
+                        <button
+                            className={`menu-item ${activeMenu === 'ejercito'
+                                ? 'menu-item-active'
+                                : ''
+                                }`}
+                            onClick={() =>
+                                setActiveMenu('ejercito')
+                            }
+                        >
+                            Ejército
+                        </button>
+
+
+                        {/* TECNOLOGÍAS */}
+
+                        <button
+                            className={`menu-item ${activeMenu === 'tecnologias'
+                                ? 'menu-item-active'
+                                : ''
+                                }`}
+                            onClick={() =>
+                                setActiveMenu('tecnologias')
+                            }
+                        >
+                            Tecnologías
+                        </button>
+
+
+                        {/* EXPLORACIÓN */}
+
                         <button
                             className={`menu-item ${activeMenu === 'exploracion'
                                 ? 'menu-item-active'
@@ -218,8 +307,10 @@ function GamePage() {
                         >
                             Exploración
                         </button>
-    
-    
+
+
+                        {/* MAPA */}
+
                         <button
                             className={`menu-item ${activeMenu === 'mapa'
                                 ? 'menu-item-active'
@@ -231,100 +322,104 @@ function GamePage() {
                         >
                             Mapa
                         </button>
-    
+
                     </nav>
-    
+
                 </aside>
-    
-    
+
+
                 {/* ==================================
                     COLUMNA CENTRAL - CONTENIDO
                 ================================== */}
-    
+
                 <section className="game-main">
-    
+
                     <h2>
                         {getPageTitle()}
                     </h2>
-    
-    
+
+
                     {error && (
                         <div className="error-message">
                             {error}
                         </div>
                     )}
-    
-    
+
+
                     {/* ==================================
-                        RECURSOS BÁSICOS
+                        EDIFICACIONES
                     ================================== */}
-    
-                    {activeMenu === 'recursos' && (
-    
-                        <div className="buildings-grid">
-    
-                            {buildings.buildings.map(
-                                (building) => {
-    
-                                    return (
-                                        <BuildingCard
-                                            key={building.building_id}
-                                            building={building}
-                                            resources={resources.resources}
-                                            onUpgrade={handleUpgrade}
-                                            upgrading={
-                                                upgradingBuildingId ===
-                                                building.building_id
-                                            }
-                                        />
-                                    );
-    
-                                }
-                            )}
-    
-                        </div>
-    
-                    )}
-    
-    
+
+                    {(
+                        activeMenu === 'recursos' ||
+                        activeMenu === 'ejercito' ||
+                        activeMenu === 'tecnologias'
+                    ) && (
+
+                            <div className="buildings-grid">
+
+                                {getBuildingsForMenu().map(
+                                    (building) => {
+
+                                        return (
+                                            <BuildingCard
+                                                key={building.building_id}
+                                                building={building}
+                                                resources={resources.resources}
+                                                onUpgrade={handleUpgrade}
+                                                upgrading={
+                                                    upgradingBuildingId ===
+                                                    building.building_id
+                                                }
+                                            />
+                                        );
+
+                                    }
+                                )}
+
+                            </div>
+
+                        )}
+
+
                     {/* ==================================
                         EXPLORACIÓN
                     ================================== */}
-    
+
                     {activeMenu === 'exploracion' && (
-    
+
                         <div className="empty-game-panel">
-    
+
                         </div>
-    
+
                     )}
-    
-    
+
+
                     {/* ==================================
                         MAPA
                     ================================== */}
-    
+
                     {activeMenu === 'mapa' && (
-    
+
                         <div className="empty-game-panel">
-    
+
                         </div>
-    
+
                     )}
-    
+
                 </section>
-    
-    
+
+
                 {/* ==================================
                     COLUMNA DERECHA - CIUDADES
                 ================================== */}
-    
+
                 <aside className="city-panel">
-    
+
                     <h3>Ciudades</h3>
-    
+
                     <div className="city-list">
-    
+
                         <button
                             className={`city-item ${selectedCityId === 1
                                 ? 'city-item-active'
@@ -334,32 +429,32 @@ function GamePage() {
                                 setSelectedCityId(1)
                             }
                         >
-    
+
                             <span className="city-icon">
                                 🏰
                             </span>
-    
+
                             <span className="city-info">
-    
+
                                 <strong>
                                     Ciudad Principal
                                 </strong>
-    
+
                                 <small>
                                     Ciudad 1
                                 </small>
-    
+
                             </span>
-    
+
                         </button>
-    
+
                     </div>
-    
+
                 </aside>
-    
-    
+
+
             </main>
-    
+
         </div>
     );
 }

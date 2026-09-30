@@ -47,6 +47,10 @@ function BuildingCard({
 
         switch (buildingName) {
 
+            // ==============================
+            // RECURSOS
+            // ==============================
+
             case 'Mina':
                 return '/mina.mp4';
 
@@ -55,6 +59,45 @@ function BuildingCard({
 
             case 'Granja':
                 return '/granja.mp4';
+
+
+            // ==============================
+            // EJÉRCITO
+            // ==============================
+
+            case 'Transporte':
+                return '/transporte.mp4';
+
+            case 'Cuartel':
+                return '/cuartel.mp4';
+
+            case 'Campo de Tiro':
+                return '/campo_de_tiro.mp4';
+
+            case 'Caballeria':
+                return '/caballeria.mp4';
+
+            case 'Taller':
+                return '/taller.mp4';
+
+
+            // ==============================
+            // TECNOLOGÍAS
+            // ==============================
+
+            case 'Armeria':
+                return '/armeria.mp4';
+
+            case 'Establo':
+                return '/establo.mp4';
+
+            case 'Ingenieria':
+                return '/ingenieria.mp4';
+
+
+            // ==============================
+            // DEFAULT
+            // ==============================
 
             default:
                 return '/edificio.mp4';
@@ -158,6 +201,13 @@ function BuildingCard({
     // ¿PUEDE MEJORAR?
     // ========================================
 
+    // ========================================
+    // REQUISITOS DE EDIFICACIÓN
+    // ========================================
+
+    const buildingRequirements =
+        building.requirements ?? [];
+
     const hasEnoughResources =
         resourceRequirements.every(
             requirement =>
@@ -166,10 +216,17 @@ function BuildingCard({
         );
 
 
+    const hasBuildingRequirements =
+        buildingRequirements.every(
+            requirement =>
+                requirement.met
+        );
+
+
     const canUpgrade =
         hasEnoughResources &&
+        hasBuildingRequirements &&
         !upgrading;
-
 
     // ========================================
     // RENDER
@@ -219,42 +276,45 @@ function BuildingCard({
 
                     {/* PRODUCCIÓN */}
 
-                    <div className="building-stat">
+                    {building.category === 'RECURSOS' && (
 
-                        <span className="stat-label">
-                            Producción
-                        </span>
+                        <div className="building-stat">
 
-
-                        <span
-                            className="stat-value"
-                            style={{
-                                color:
-                                    getResourceConfig(
-                                        building.resource_name
-                                    ).color
-                            }}
-                        >
-
-                            <span>
-                                {
-                                    getResourceConfig(
-                                        building.resource_name
-                                    ).icon
-                                }
+                            <span className="stat-label">
+                                Producción
                             </span>
 
-                            {' '}
+                            <span
+                                className="stat-value"
+                                style={{
+                                    color:
+                                        getResourceConfig(
+                                            building.resource_name
+                                        ).color
+                                }}
+                            >
 
-                            {formatNumber(
-                                productionPerHour
-                            )}
+                                <span>
+                                    {
+                                        getResourceConfig(
+                                            building.resource_name
+                                        ).icon
+                                    }
+                                </span>
 
-                            {' /h'}
+                                {' '}
 
-                        </span>
+                                {formatNumber(
+                                    productionPerHour
+                                )}
 
-                    </div>
+                                {' /h'}
+
+                            </span>
+
+                        </div>
+
+                    )}
 
 
                     {/* COSTE DE MEJORA */}
@@ -350,9 +410,14 @@ function BuildingCard({
 
                         <div className="upgrade-tooltip">
 
+                            {/* ==================================
+    RECURSOS PARA MEJORAR
+================================== */}
+
                             <strong>
                                 Recursos para mejorar
                             </strong>
+
 
                             <div className="tooltip-resources">
 
@@ -364,9 +429,11 @@ function BuildingCard({
                                     >
 
                                         {/* NOMBRE + PORCENTAJE + CANTIDAD */}
+
                                         <div className="tooltip-resource-header">
 
                                             {/* NOMBRE + ICONO */}
+
                                             <span
                                                 className="tooltip-resource-name"
                                                 style={{
@@ -376,6 +443,7 @@ function BuildingCard({
                                                         ]?.color
                                                 }}
                                             >
+
                                                 {resourceConfig[
                                                     resource.resource_name
                                                 ]?.icon}
@@ -383,14 +451,23 @@ function BuildingCard({
                                                 {' '}
 
                                                 {resource.resource_name}
+
                                             </span>
+
 
                                             {/* PORCENTAJE */}
+
                                             <span className="tooltip-resource-percentage">
-                                                {formatNumber(resource.percentage)}%
+
+                                                {formatNumber(
+                                                    resource.percentage
+                                                )}%
+
                                             </span>
 
+
                                             {/* CANTIDAD */}
+
                                             <span
                                                 className="tooltip-resource-amount"
                                                 style={{
@@ -400,14 +477,24 @@ function BuildingCard({
                                                         ]?.color
                                                 }}
                                             >
-                                                {formatNumber(resource.available)}
+
+                                                {formatNumber(
+                                                    resource.available
+                                                )}
+
                                                 {' / '}
-                                                {formatNumber(resource.required)}
+
+                                                {formatNumber(
+                                                    resource.required
+                                                )}
+
                                             </span>
 
                                         </div>
 
+
                                         {/* BARRA DE PROGRESO */}
+
                                         <div className="tooltip-progress-bar">
 
                                             <div
@@ -417,6 +504,7 @@ function BuildingCard({
                                                         resource.percentage,
                                                         100
                                                     )}%`,
+
                                                     backgroundColor:
                                                         resourceConfig[
                                                             resource.resource_name
@@ -431,6 +519,69 @@ function BuildingCard({
                                 ))}
 
                             </div>
+
+
+                            {/* ==================================
+    REQUISITOS DE EDIFICACIÓN
+================================== */}
+
+                            {buildingRequirements.length > 0 && (
+
+                                <div className="tooltip-requirements">
+
+                                    <strong>
+                                        Requisitos
+                                    </strong>
+
+
+                                    <div className="tooltip-requirements-list">
+
+                                        {buildingRequirements.map(
+                                            (requirement) => (
+
+                                                <div
+                                                    key={requirement.building_id}
+                                                    className={`tooltip-requirement ${requirement.met
+                                                        ? 'tooltip-requirement-met'
+                                                        : 'tooltip-requirement-missing'
+                                                        }`}
+                                                >
+
+                                                    <span className="tooltip-requirement-name">
+
+                                                        {requirement.met
+                                                            ? '✓'
+                                                            : '🔒'}
+
+                                                        {' '}
+
+                                                        {requirement.building_name}
+
+                                                    </span>
+
+
+                                                    <span className="tooltip-requirement-level">
+
+                                                        Nivel {requirement.required_level}
+
+                                                        {' '}
+
+                                                        {requirement.met
+                                                            ? '✓'
+                                                            : `(Actual: ${requirement.current_level})`}
+
+                                                    </span>
+
+                                                </div>
+
+                                            )
+                                        )}
+
+                                    </div>
+
+                                </div>
+
+                            )}
 
                         </div>
 
