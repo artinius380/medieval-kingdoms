@@ -4,6 +4,7 @@ node_modules/
 # Environment variables
 .env
 .env.*
+!.env.example
 
 # Logs
 logs/
@@ -19,7 +20,16 @@ Thumbs.db
 
 # Build
 dist/
+!MedievalKingdoms.Api/wwwroot/lib/**/dist/
 build/
 
 # Random Queries
 database/RANDOMQUERIES.sql
+# .NET / Visual Studio
+bin/
+obj/
+.vs/
+*.user
+
+# Logs del backend Node
+backend/logs/

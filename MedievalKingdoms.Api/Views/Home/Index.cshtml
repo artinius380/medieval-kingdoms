@@ -1,0 +1,90 @@
+@model MedievalKingdoms.Api.Models.PanelViewModel
+@{
+    ViewData["Title"] = "Panel";
+}
+
+<h1 class="mb-1">Medieval Kingdoms</h1>
+<p class="text-muted">
+    Panel MVC del servidor.
+    El juego se juega en <a href="http://localhost:5173">localhost:5173</a> (React),
+    que consume la API <code>/api/...</code> de este proyecto.
+</p>
+
+@if (!Model.Connected)
+{
+    <div class="alert alert-danger">
+        No se pudo conectar a SQL Server. Revisa la cadena
+        <code>ConnectionStrings:MedievalKingdoms</code> en <code>appsettings.json</code>.
+    </div>
+}
+else if (Model.Cities.Count == 0)
+{
+    <div class="alert alert-warning">La base está conectada pero no hay ciudades.</div>
+}
+else
+{
+    <div class="alert alert-success py-2">Conectado a SQL Server</div>
+
+    @foreach (var city in Model.Cities)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>@city.Name</strong>
+                <span class="text-muted">· Jugador @city.PlayerName · Coordenadas (@city.X, @city.Y)</span>
+            </div>
+            <div class="card-body">
+                <h5>Recursos</h5>
+                <table class="table table-sm w-auto">
+                    <thead>
+                        <tr><th>Recurso</th><th class="text-end">Cantidad</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in city.Resources)
+                        {
+                            <tr>
+                                <td>@r.Name</td>
+                                <td class="text-end">@r.Amount.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <h5>Edificios construidos</h5>
+                @if (city.Buildings.Count == 0)
+                {
+                    <p class="text-muted">Ninguno.</p>
+                }
+                else
+                {
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Edificio</th>
+                                <th>Categoría</th>
+                                <th class="text-end">Nivel</th>
+                                <th class="text-end">Producción / hora</th>
+                                <th>Costo siguiente nivel</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var b in city.Buildings)
+                            {
+                                <tr>
+                                    <td>@b.Name</td>
+                                    <td>@b.Category</td>
+                                    <td class="text-end">@b.Level</td>
+                                    <td class="text-end">
+                                        @(b.ProductionPerHour > 0 ? $"{b.ProductionPerHour:N2} {b.ResourceName}" : "-")
+                                    </td>
+                                    <td>
+                                        @(string.Join(" · ", b.UpgradeCosts.Select(c => $"{c.Amount:N0} {c.ResourceName}")))
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    }
+}

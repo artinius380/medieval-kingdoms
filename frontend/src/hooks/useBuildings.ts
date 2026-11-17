@@ -8,6 +8,8 @@ import type {
     Building
 } from '../types/game';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 interface BuildingsResponse {
 
@@ -64,7 +66,7 @@ export function useBuildings(
 
                     const response =
                         await fetch(
-                            `http://localhost:3000/api/players/${playerId}/cities/${cityId}/buildings`
+                            `${API_URL}/players/${playerId}/cities/${cityId}/buildings`
                         );
 
 
@@ -143,7 +145,7 @@ export function useBuildings(
 
                 const response =
                     await fetch(
-                        `http://localhost:3000/api/players/${playerId}/cities/${cityId}/buildings/${buildingId}/upgrade`,
+                        `${API_URL}/players/${playerId}/cities/${cityId}/buildings/${buildingId}/upgrade`,
                         {
                             method: 'POST'
                         }
